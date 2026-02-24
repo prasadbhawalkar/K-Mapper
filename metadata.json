@@ -1,0 +1,5 @@
+{
+  "name": "Knowledge Mapper Pro",
+  "description": "A professional hierarchical knowledge visualization tool powered by D3.js and React, featuring real-time search, interactive node exploration, and a sleek technical dashboard interface.",
+  "requestFramePermissions": []
+}
