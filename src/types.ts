@@ -9,6 +9,7 @@ export interface NodeData {
   parent: string | null;
   label: string;
   url?: string;
+  imageUrl?: string;
   description?: string;
 }
 

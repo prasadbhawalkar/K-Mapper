@@ -240,6 +240,17 @@ export default function App() {
                 <h3 className="text-xl font-bold mb-4 leading-tight">{selectedNode.label}</h3>
                 
                 <div className="space-y-6">
+                  {selectedNode.imageUrl && (
+                    <div className="rounded-xl overflow-hidden border border-black/5 shadow-sm">
+                      <img 
+                        src={selectedNode.imageUrl} 
+                        alt={selectedNode.label}
+                        className="w-full h-48 object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-2">Description</p>
                     <p className="text-sm text-gray-600 leading-relaxed">

@@ -90,29 +90,43 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
       nodeEnter.append('rect')
         .attr('class', 'node-rect')
         .attr('x', 0)
-        .attr('y', -18)
-        .attr('width', 200)
-        .attr('height', 36)
-        .attr('rx', 6)
+        .attr('y', -22)
+        .attr('width', 220)
+        .attr('height', 44)
+        .attr('rx', 8)
         .attr('fill', 'white')
         .attr('stroke', '#E2E8F0')
         .attr('stroke-width', 1)
         .style('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,0.05))');
 
+      // Thumbnail Image
+      nodeEnter.filter((d: any) => !!d.data.imageUrl)
+        .append('image')
+        .attr('xlink:href', (d: any) => d.data.imageUrl)
+        .attr('x', 6)
+        .attr('y', -16)
+        .attr('width', 32)
+        .attr('height', 32)
+        .attr('preserveAspectRatio', 'xMidYMid slice')
+        .style('clip-path', 'inset(0% round 4px)');
+
       // Node Label
       nodeEnter.append('text')
         .attr('dy', '0.35em')
-        .attr('x', 12)
+        .attr('x', (d: any) => d.data.imageUrl ? 46 : 12)
         .attr('font-size', '12px')
         .attr('font-family', 'Inter, sans-serif')
-        .text((d: any) => d.data.label.length > 25 ? d.data.label.substring(0, 22) + '...' : d.data.label)
+        .text((d: any) => {
+          const limit = d.data.imageUrl ? 20 : 28;
+          return d.data.label.length > limit ? d.data.label.substring(0, limit - 3) + '...' : d.data.label;
+        })
         .style('user-select', 'none');
 
       // Link Icon (if URL exists)
       const linkIcon = nodeEnter.filter((d: any) => !!d.data.url)
         .append('g')
         .attr('class', 'link-icon')
-        .attr('transform', 'translate(175, 0)')
+        .attr('transform', 'translate(195, 0)')
         .on('click', (event, d: any) => {
           event.stopPropagation();
           window.open(d.data.url, '_blank');
@@ -159,7 +173,7 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
       nodeEnter.filter((d: any) => d.children || d._children)
         .append('circle')
         .attr('class', 'toggle-indicator')
-        .attr('cx', 200)
+        .attr('cx', 220)
         .attr('cy', 0)
         .attr('r', 4)
         .attr('fill', (d: any) => d._children ? '#2563EB' : '#94A3B8');
