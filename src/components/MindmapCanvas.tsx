@@ -100,9 +100,13 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
         .style('filter', 'drop-shadow(0 1px 2px rgba(0,0,0,0.05))');
 
       // Thumbnail Image
-      nodeEnter.filter((d: any) => !!d.data.imageUrl)
+      nodeEnter.filter((d: any) => {
+        const url = d.data.imageUrl || (d.data as any).image_url;
+        if (url) console.log("Rendering image for node:", d.data.label, url);
+        return !!url;
+      })
         .append('image')
-        .attr('xlink:href', (d: any) => d.data.imageUrl)
+        .attr('href', (d: any) => d.data.imageUrl || (d.data as any).image_url)
         .attr('x', 6)
         .attr('y', -16)
         .attr('width', 32)
@@ -113,11 +117,12 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
       // Node Label
       nodeEnter.append('text')
         .attr('dy', '0.35em')
-        .attr('x', (d: any) => d.data.imageUrl ? 46 : 12)
+        .attr('x', (d: any) => (d.data.imageUrl || (d.data as any).image_url) ? 46 : 12)
         .attr('font-size', '12px')
         .attr('font-family', 'Inter, sans-serif')
         .text((d: any) => {
-          const limit = d.data.imageUrl ? 20 : 28;
+          const hasImage = d.data.imageUrl || (d.data as any).image_url;
+          const limit = hasImage ? 20 : 28;
           return d.data.label.length > limit ? d.data.label.substring(0, limit - 3) + '...' : d.data.label;
         })
         .style('user-select', 'none');

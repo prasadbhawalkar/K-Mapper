@@ -240,10 +240,10 @@ export default function App() {
                 <h3 className="text-xl font-bold mb-4 leading-tight">{selectedNode.label}</h3>
                 
                 <div className="space-y-6">
-                  {selectedNode.imageUrl && (
+                  {(selectedNode.imageUrl || selectedNode.image_url) && (
                     <div className="rounded-xl overflow-hidden border border-black/5 shadow-sm">
                       <img 
-                        src={selectedNode.imageUrl} 
+                        src={selectedNode.imageUrl || selectedNode.image_url} 
                         alt={selectedNode.label}
                         className="w-full h-48 object-cover"
                         referrerPolicy="no-referrer"

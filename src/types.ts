@@ -10,6 +10,7 @@ export interface NodeData {
   label: string;
   url?: string;
   imageUrl?: string;
+  image_url?: string;
   description?: string;
 }
 
