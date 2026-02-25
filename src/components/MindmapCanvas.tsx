@@ -12,32 +12,47 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
 
+  const hierarchyRef = useRef<any>(null);
+  const lastMapId = useRef<string | null>(null);
+
   useEffect(() => {
     if (!svgRef.current || !nodes.length) return;
 
     const svg = d3.select(svgRef.current);
     const g = d3.select(gRef.current);
     
-    // Clear previous content
-    g.selectAll('*').remove();
-
-    // Create hierarchy
-    const root = d3.stratify<NodeData>()
-      .id(d => d.id)
-      .parentId(d => d.parent)(nodes);
-
-    // Initial collapse: only show root and its children
-    root.descendants().forEach((d: any) => {
-      if (d.depth > 0) {
-        d._children = d.children;
-        d.children = null;
-      }
-    });
+    // Determine if we are switching maps
+    const currentMapId = nodes[0]?.id.split('_')[0] || 'default';
+    const isNewMap = currentMapId !== lastMapId.current;
+    
+    let root: any;
+    if (isNewMap || !hierarchyRef.current) {
+      // Create fresh hierarchy
+      root = d3.stratify<NodeData>()
+        .id(d => d.id)
+        .parentId(d => d.parent)(nodes);
+      
+      // Initial collapse: only show root and its children
+      root.descendants().forEach((d: any) => {
+        if (d.depth > 0) {
+          d._children = d.children;
+          d.children = null;
+        }
+      });
+      
+      hierarchyRef.current = root;
+      lastMapId.current = currentMapId;
+      g.selectAll('*').remove(); // Clear canvas for new map
+    } else {
+      root = hierarchyRef.current;
+    }
 
     // Auto-expand based on search
     if (searchQuery) {
       root.descendants().forEach((d: any) => {
-        if (d.data.label.toLowerCase().includes(searchQuery.toLowerCase())) {
+        const label = d.data.label.toLowerCase();
+        const query = searchQuery.toLowerCase();
+        if (label.includes(query)) {
           // Expand all ancestors
           let ancestor = d;
           while (ancestor.parent) {
@@ -182,9 +197,7 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
 
       // Click behavior
       nodeEnter.on('click', (event, d: any) => {
-        // Always show details panel for any node clicked
-        onNodeClick(d.data);
-
+        event.stopPropagation();
         const isInternal = d.children || d._children;
         if (isInternal) {
           // Toggle internal nodes
@@ -196,7 +209,17 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
             d._children = null;
           }
           update(d);
+        } else {
+          // Leaf node: single click shows details
+          onNodeClick(d.data);
         }
+      });
+
+      // Double click behavior
+      nodeEnter.on('dblclick', (event, d: any) => {
+        event.stopPropagation();
+        // Always show details panel on double click
+        onNodeClick(d.data);
       });
 
       // Expand/Collapse Chevron
