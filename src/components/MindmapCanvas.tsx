@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NodeData } from '../types';
 
 interface MindmapCanvasProps {
@@ -11,9 +11,12 @@ interface MindmapCanvasProps {
 export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: MindmapCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
+  const [version, setVersion] = useState(0);
 
   const hierarchyRef = useRef<any>(null);
   const lastMapId = useRef<string | null>(null);
+
+  const triggerUpdate = () => setVersion(v => v + 1);
 
   useEffect(() => {
     if (!svgRef.current || !nodes.length) return;
@@ -46,6 +49,24 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
     } else {
       root = hierarchyRef.current;
     }
+
+    // Helper to expand/collapse all
+    const toggleAll = (expand: boolean) => {
+      root.descendants().forEach((d: any) => {
+        if (expand) {
+          if (d._children) {
+            d.children = d._children;
+            d._children = null;
+          }
+        } else {
+          if (d.children && d.depth > 0) {
+            d._children = d.children;
+            d.children = null;
+          }
+        }
+      });
+      update(root);
+    };
 
     // Auto-expand based on search
     if (searchQuery) {
@@ -290,10 +311,12 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
     update(root);
 
     // Initial center
-    const initialTransform = d3.zoomIdentity.translate(100, svgRef.current.clientHeight / 2).scale(1);
-    svg.call(zoom.transform, initialTransform);
+    if (isNewMap) {
+      const initialTransform = d3.zoomIdentity.translate(100, svgRef.current.clientHeight / 2).scale(1);
+      svg.call(zoom.transform, initialTransform);
+    }
 
-  }, [nodes, searchQuery]);
+  }, [nodes, searchQuery, version]);
 
   return (
     <div className="w-full h-full bg-[#F8F9FA] relative overflow-hidden">
@@ -305,7 +328,51 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
         <g ref={gRef} />
       </svg>
       
-      <div className="absolute bottom-6 right-6 flex flex-col gap-2">
+      <div className="absolute bottom-6 right-6 flex flex-col gap-3">
+        {/* Controls */}
+        <div className="bg-white p-1 rounded-xl shadow-soft border border-black/5 flex flex-col gap-1">
+          <button 
+            onClick={() => {
+              if (hierarchyRef.current) {
+                hierarchyRef.current.descendants().forEach((d: any) => {
+                  if (d._children) {
+                    d.children = d._children;
+                    d._children = null;
+                  }
+                });
+                triggerUpdate();
+              }
+            }}
+            title="Expand All"
+            className="p-2 hover:bg-gray-50 rounded-lg text-gray-500 flex items-center gap-2 text-xs font-semibold"
+          >
+            <div className="w-5 h-5 flex items-center justify-center bg-blue-50 text-blue-600 rounded">
+              <span className="text-[10px]">MAX</span>
+            </div>
+            Expand All
+          </button>
+          <button 
+            onClick={() => {
+              if (hierarchyRef.current) {
+                hierarchyRef.current.descendants().forEach((d: any) => {
+                  if (d.children && d.depth > 0) {
+                    d._children = d.children;
+                    d.children = null;
+                  }
+                });
+                triggerUpdate();
+              }
+            }}
+            title="Collapse All"
+            className="p-2 hover:bg-gray-50 rounded-lg text-gray-500 flex items-center gap-2 text-xs font-semibold"
+          >
+            <div className="w-5 h-5 flex items-center justify-center bg-gray-100 text-gray-600 rounded">
+              <span className="text-[10px]">MIN</span>
+            </div>
+            Collapse All
+          </button>
+        </div>
+
         <div className="bg-white p-2 rounded-lg shadow-soft border border-black/5 flex flex-col gap-1">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-semibold text-gray-400 px-1">
             <div className="w-2 h-2 rounded-full bg-blue-600"></div>
