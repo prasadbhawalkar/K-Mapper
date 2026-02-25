@@ -68,9 +68,20 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
       update(root);
     };
 
+    // Helper to find all nodes (including collapsed ones)
+    const findAllNodes = (d: any, results: any[] = []) => {
+      results.push(d);
+      const children = d.children || d._children;
+      if (children) {
+        children.forEach((child: any) => findAllNodes(child, results));
+      }
+      return results;
+    };
+
     // Auto-expand based on search
     if (searchQuery) {
-      root.descendants().forEach((d: any) => {
+      const allNodes = findAllNodes(root);
+      allNodes.forEach((d: any) => {
         const label = d.data.label.toLowerCase();
         const query = searchQuery.toLowerCase();
         if (label.includes(query)) {
@@ -334,12 +345,16 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
           <button 
             onClick={() => {
               if (hierarchyRef.current) {
-                hierarchyRef.current.descendants().forEach((d: any) => {
+                const findAll = (d: any) => {
                   if (d._children) {
                     d.children = d._children;
                     d._children = null;
                   }
-                });
+                  if (d.children) {
+                    d.children.forEach(findAll);
+                  }
+                };
+                findAll(hierarchyRef.current);
                 triggerUpdate();
               }
             }}
@@ -354,12 +369,17 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
           <button 
             onClick={() => {
               if (hierarchyRef.current) {
-                hierarchyRef.current.descendants().forEach((d: any) => {
+                const collapseAll = (d: any) => {
                   if (d.children && d.depth > 0) {
                     d._children = d.children;
                     d.children = null;
                   }
-                });
+                  const children = d.children || d._children;
+                  if (children) {
+                    children.forEach(collapseAll);
+                  }
+                };
+                collapseAll(hierarchyRef.current);
                 triggerUpdate();
               }
             }}
