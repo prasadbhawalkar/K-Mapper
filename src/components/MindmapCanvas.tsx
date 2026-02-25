@@ -34,6 +34,23 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
       }
     });
 
+    // Auto-expand based on search
+    if (searchQuery) {
+      root.descendants().forEach((d: any) => {
+        if (d.data.label.toLowerCase().includes(searchQuery.toLowerCase())) {
+          // Expand all ancestors
+          let ancestor = d;
+          while (ancestor.parent) {
+            ancestor = ancestor.parent;
+            if (ancestor._children) {
+              ancestor.children = ancestor._children;
+              ancestor._children = null;
+            }
+          }
+        }
+      });
+    }
+
     const treeLayout = d3.tree<NodeData>().nodeSize([50, 240]);
 
     function update(source: any) {
@@ -156,13 +173,12 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
 
       // Click behavior
       nodeEnter.on('click', (event, d: any) => {
-        const isLeaf = !d.children && !d._children;
-        
-        if (isLeaf) {
-          // Last level: show description
-          onNodeClick(d.data);
-        } else {
-          // Internal level: toggle
+        // Always show details panel for any node clicked
+        onNodeClick(d.data);
+
+        const isInternal = d.children || d._children;
+        if (isInternal) {
+          // Toggle internal nodes
           if (d.children) {
             d._children = d.children;
             d.children = null;
@@ -174,19 +190,31 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
         }
       });
 
-      // Expand/Collapse Indicator
-      nodeEnter.filter((d: any) => d.children || d._children)
-        .append('circle')
-        .attr('class', 'toggle-indicator')
-        .attr('cx', 220)
-        .attr('cy', 0)
-        .attr('r', 4)
-        .attr('fill', (d: any) => d._children ? '#2563EB' : '#94A3B8');
+      // Expand/Collapse Chevron
+      const chevron = nodeEnter.filter((d: any) => d.children || d._children)
+        .append('g')
+        .attr('class', 'toggle-chevron')
+        .attr('transform', 'translate(210, 0)');
+
+      chevron.append('path')
+        .attr('d', 'M1 1l4 4-4 4')
+        .attr('fill', 'none')
+        .attr('stroke', '#94A3B8')
+        .attr('stroke-width', 2)
+        .attr('stroke-linecap', 'round')
+        .attr('stroke-linejoin', 'round');
 
       const nodeUpdate = node.merge(nodeEnter as any);
       
       nodeUpdate.transition().duration(duration)
         .attr('transform', (d: any) => `translate(${d.y},${d.x})`);
+
+      nodeUpdate.select('.toggle-chevron')
+        .transition().duration(duration)
+        .attr('transform', (d: any) => d._children ? 'translate(210, 0) rotate(0)' : 'translate(210, 0) rotate(90)');
+
+      nodeUpdate.select('.toggle-chevron path')
+        .attr('stroke', (d: any) => d._children ? '#94A3B8' : '#2563EB');
 
       nodeUpdate.select('.node-rect')
         .attr('stroke', (d: any) => {
@@ -205,9 +233,6 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
           return '#1E293B';
         })
         .attr('font-weight', (d: any) => (searchQuery && d.data.label.toLowerCase().includes(searchQuery.toLowerCase())) || d.depth === 0 ? '600' : '400');
-
-      nodeUpdate.select('.toggle-indicator')
-        .attr('fill', (d: any) => d._children ? '#2563EB' : '#94A3B8');
 
       node.exit().transition().duration(duration)
         .attr('transform', `translate(${source.y},${source.x})`)

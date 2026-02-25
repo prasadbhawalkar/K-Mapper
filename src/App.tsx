@@ -240,13 +240,16 @@ export default function App() {
                 <h3 className="text-xl font-bold mb-4 leading-tight">{selectedNode.label}</h3>
                 
                 <div className="space-y-6">
-                  {(selectedNode.imageUrl || selectedNode.image_url) && (
-                    <div className="rounded-xl overflow-hidden border border-black/5 shadow-sm">
+                  {(selectedNode.imageUrl || selectedNode.image_url || (selectedNode as any).thumbnail) && (
+                    <div className="rounded-xl overflow-hidden border border-black/5 shadow-sm bg-gray-50">
                       <img 
-                        src={selectedNode.imageUrl || selectedNode.image_url} 
+                        src={selectedNode.imageUrl || selectedNode.image_url || (selectedNode as any).thumbnail} 
                         alt={selectedNode.label}
-                        className="w-full h-48 object-cover"
+                        className="w-full h-48 object-contain"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
                     </div>
                   )}
