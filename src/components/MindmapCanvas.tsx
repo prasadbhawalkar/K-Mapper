@@ -70,9 +70,12 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
         .attr('class', 'link')
         .attr('d', (d: any) => {
           const o = { x: source.x0 || source.x, y: source.y0 || source.y };
+          // Start from parent's right edge (y + 220)
+          const sourcePoint = { x: o.x, y: o.y + 220 };
+          const targetPoint = { x: o.x, y: o.y + 220 };
           return d3.linkHorizontal()
-            .x((d: any) => d.y)
-            .y((d: any) => d.x)({ source: o, target: o } as any);
+            .x((p: any) => p.y)
+            .y((p: any) => p.x)({ source: sourcePoint, target: targetPoint } as any);
         })
         .attr('fill', 'none')
         .attr('stroke', '#CBD5E1')
@@ -81,16 +84,22 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
 
       const linkUpdate = link.merge(linkEnter as any);
       linkUpdate.transition().duration(duration)
-        .attr('d', d3.linkHorizontal()
-          .x((d: any) => d.y)
-          .y((d: any) => d.x) as any);
+        .attr('d', (d: any) => {
+          return d3.linkHorizontal()
+            .x((p: any) => p.y)
+            .y((p: any) => p.x)({
+              source: { x: d.source.x, y: d.source.y + 220 },
+              target: { x: d.target.x, y: d.target.y }
+            } as any);
+        });
 
       link.exit().transition().duration(duration)
         .attr('d', (d: any) => {
           const o = { x: source.x, y: source.y };
+          const p = { x: o.x, y: o.y + 220 };
           return d3.linkHorizontal()
-            .x((d: any) => d.y)
-            .y((d: any) => d.x)({ source: o, target: o } as any);
+            .x((pt: any) => pt.y)
+            .y((pt: any) => pt.x)({ source: p, target: p } as any);
         })
         .remove();
 
@@ -211,7 +220,7 @@ export default function MindmapCanvas({ nodes, searchQuery, onNodeClick }: Mindm
 
       nodeUpdate.select('.toggle-chevron')
         .transition().duration(duration)
-        .attr('transform', (d: any) => d._children ? 'translate(210, 0) rotate(0)' : 'translate(210, 0) rotate(90)');
+        .attr('transform', (d: any) => d._children ? 'translate(210, 0) rotate(0)' : 'translate(210, 0) rotate(180)');
 
       nodeUpdate.select('.toggle-chevron path')
         .attr('stroke', (d: any) => d._children ? '#94A3B8' : '#2563EB');
