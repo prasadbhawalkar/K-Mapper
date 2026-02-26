@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { BootstrapResponse, MindmapData, MindmapInfo, NodeData } from './types';
 import MindmapCanvas from './components/MindmapCanvas';
 
-const API_BASE = "https://script.google.com/macros/s/AKfycbxdeIHcqEHE5SCiJV_ddiQkC22LNUXYvaHpAqEL7cEJd1GGxVDYI1PcmBkrG9KBirvo/exec";
+const API_BASE = "GAS_URL_HERE";
 
 export default function App() {
   const [maps, setMaps] = useState<MindmapInfo[]>([]);
